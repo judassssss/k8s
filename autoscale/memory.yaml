@@ -1,0 +1,16 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata:
+  name: mem-stress
+  namespace: chaos-testing
+spec:
+  mode: all
+  selector:
+    namespaces:
+      - hello-kubernetes
+  stressors:
+    memory:
+      workers: 10
+      size: 200MiB
+      options: [""]
+  duration: "1h"

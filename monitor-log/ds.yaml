@@ -1,0 +1,75 @@
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: filebeat
+  namespace: monitor
+  labels:
+    filebeat: 'true'
+    name: filebeat
+  annotations:
+    deprecated.daemonset.template.generation: '28'
+spec:
+  selector:
+    matchLabels:
+      name: filebeat
+  template:
+    metadata:
+      labels:
+        name: filebeat
+    spec:
+      volumes:
+        - name: varlib
+          hostPath:
+            path: /var/lib/
+            type: ''
+        - name: log
+          hostPath:
+            path: /var/log/containers
+            type: ''
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+            type: ''
+        - name: hosts
+          hostPath:
+            path: /etc/hosts
+            type: ''
+        - name: pods
+          hostPath:
+            path: /var/log/pods
+            type: ''
+        - name: config
+          configMap:
+            name: filebeat-config
+            items:
+              - key: filebeat.yml
+                path: filebeat.yml
+            defaultMode: 420
+        - name: cert
+          secret:
+            secretName: cert
+            defaultMode: 420
+      containers:
+        - name: filebeat
+          image: 'docker.elastic.co/beats/filebeat:8.7.0'
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: varlib
+              mountPath: /var/lib/
+            - name: log
+              mountPath: /var/log/containers
+            - name: pods
+              mountPath: /var/log/pods
+            - name: localtime
+              mountPath: /etc/localtime
+            - name: hosts
+              mountPath: /etc/hosts
+            - name: config
+              mountPath: /usr/share/filebeat/filebeat.yml
+              subPath: filebeat.yml
+            - name: cert
+              mountPath: /opt/
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Always
+      hostNetwork: true

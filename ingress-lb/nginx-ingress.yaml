@@ -1,0 +1,53 @@
+apiVersion: apps/v1 
+kind: Deployment 
+metadata: 
+  name: nginx-ingress
+spec: 
+  replicas: 1 
+  selector: 
+    matchLabels: 
+      app: nginx-ingress
+  template: 
+    metadata: 
+      labels: 
+        app: nginx-ingress
+    spec: 
+      containers: 
+      - image: nginx 
+        imagePullPolicy: IfNotPresent 
+        name: nginx-ingress
+        ports: 
+        - containerPort: 80 
+          protocol: TCP 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-ingress
+  labels:
+    app: nginx-ingress
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+  selector:
+    app: nginx-ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx  
+spec:
+  rules:
+  - host: "demo-nginx-ingress.example"
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: nginx-ingress
+            port:
+              number: 80

@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: filebeat-config
+  namespace:  monitor
+data:
+  filebeat.yml: |-
+    filebeat.autodiscover:
+      providers:
+        - type: kubernetes
+          node: ${HOSTNAME}
+          templates:
+            - condition:
+                equals:
+                  kubernetes.namespace: kube-system
+              config:
+                - type: container
+                  paths:
+                  - "/var/log/containers/*-${data.kubernetes.container.id}.log"
+                  ignore_older: 240h
+    output.kafka:
+      hosts: ["hcm01-loghub01.vngcloud.vn:10092","hcm02-loghub01.vngcloud.vn:10092","hcm03-loghub01.vngcloud.vn:10092","hcm04-loghub01.vngcloud.vn:10092","hcm05-loghub01.vngcloud.vn:10092","hcm06-loghub01.vngcloud.vn:10092"]
+      topic: 53461_c78c1f02-5f93-45fd-afcb-e867762082cd_demo-k8s 
+      partition.round_robin:
+        reachable_only: false
+      required_acks: 1
+      compression: gzip
+      max_message_bytes: 1000000
+      ssl.certificate_authorities:
+        - /opt/VNG.trust.pem
+      ssl.certificate: "/opt/user.cer.pem"
+      ssl.key: "/opt/user.key.pem"
+      ssl.verification_mode: "none"
+    logging.level: debug
